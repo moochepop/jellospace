@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+<!-- <script src="jquery-1.10.2.min.js"></script> -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+<title>Scribbles - Play Speed</title>
+<style>
+</style>
+
+<script>
+
+var preload_cards = new Array();
+for (var i = 1; i <= 52; i++){
+	preload_cards[i] = new Image(71,96);
+	preload_cards[i].src = "cards/"+filename_of_index(i);
+}
+
+
+/*
+ *	1  - 13 CLUBS
+ *	14 - 26 DIAMONDS
+ *  27 - 39 HEARTS
+ *	40 - 52 SPADES
+*/
+
+/* Given an index, return the filename of the png */
+function filename_of_index(index){
+	return (suit_of_index(index)+number_of_index(index)+".png");
+}
+
+function suit_of_index(index){
+	if (index >= 1 && index <= 13){
+		return ("c");
+	}
+	else if (index >=14 && index <= 26){
+		return ("d");
+	}
+	else if (index >=27 && index <= 39){
+		return ("h");
+	}
+	else if (index >=40 && index <= 52){
+		return ("s");
+	}
+}
+
+function number_of_index(index){
+	
+	if (index >= 1 && index <= 13){
+		return (index);
+	}
+	else if (index >=14 && index <= 26){
+		return (index-13);
+	}
+	else if (index >=27 && index <= 39){
+		return (index-26);
+	}
+	else if (index >=40 && index <= 52){
+		return (index-39);
+	}
+}
+
+function random_card(){
+	var icard = (Math.round(Math.random()*100)%52 + 1);
+	if (icard < 1 || icard > 52)
+		alert("error: got invalid random card");
+	return icard;
+}
+
+function random_unused_index(){
+	while (1){
+		var index = random_card();
+		if (cards[index] == false){
+			cards[index] = true; // set as "used"
+			return (index);
+			}
+	}
+}
+
+function set_card_index_as_used(index){
+	if (cards[index] == true)
+		alert("error: this card index was already used!");
+	cards[index] = true;
+}
+
+function start(){
+	if (game_started == true)
+		return;
+	
+	restart(false);
+}
+
+/*
+	Resets the game state.
+	Takes boolean parameter use_old_difficulty
+*/
+function restart(use_old_difficulty){
+
+	// Set all cards to "not used"
+	for (var icard = 1; icard <= 52; icard++){
+		cards[icard] = false;
+	}
+	
+	var new_index;
+	// Flip over the two stack piles
+	for (var istack = 1; istack <= 2; istack++){
+		new_index = random_unused_index();
+		document.getElementById("stack"+istack).src = "cards/"+filename_of_index(new_index);
+		current_stack[istack] = number_of_index(new_index);
+	}
+	
+	// Deal 5 cards to player
+	for (var icard = 1; icard <= 5; icard++){
+		new_index = random_unused_index();
+		document.getElementById("hand"+icard).src = "cards/"+filename_of_index(new_index);
+		player_cards[icard] = number_of_index(new_index);
+	}
+	num_cards_in_hand = 5;
+	document.getElementById("remaining_draw").innerHTML = "15";
+	document.getElementById("player_hand").innerHTML = "Your hand";
+	
+	// Deal 5 cards to AI
+	for (var icard = 1; icard <= 5; icard++){
+		new_index = random_unused_index();
+		document.getElementById("ai"+icard).src = "cards/"+filename_of_index(new_index);
+		ai_cards[icard] = number_of_index(new_index);
+	}
+	num_cards_in_ai = 5;
+	document.getElementById("remaining_ai_draw").innerHTML = "15";
+	document.getElementById("ai_hand").innerHTML = "Opponent's hand";
+	
+	num_cards_in_player_draw = 15;
+	num_cards_in_ai_draw = 15;
+	fill_remaining = 5;
+	
+	// redraw the draw piles
+	document.getElementById("ai_draw").src = "cards/b1fv_multiple.png";
+	document.getElementById("draw").src = "cards/b1fv_multiple.png";
+	
+	// redraw the fill piles
+	document.getElementById("fill1").src = "cards/b1fv.png";
+	document.getElementById("fill2").src = "cards/b1fv.png";
+	
+	if (use_old_difficulty) {
+		ai_move_interval = setInterval(function(){ai_move()},(11-dif_level)*300);
+	}
+	else{
+		// Disable the difficulty select
+		document.getElementById("difficulty").disabled = true;
+		document.getElementById("difficulty").style.visibility = "hidden";
+		
+		
+		// Calculate AI move interval based on selected difficult level
+		var element = document.getElementById("difficulty");
+		dif_level = element.options[element.selectedIndex].value;
+		document.getElementById("difficulty_level_text").innerHTML = "Playing on difficulty "+dif_level;
+		ai_move_interval = setInterval(function(){ai_move()},(11-dif_level)*300);
+	}
+	game_started = true;
+	card_animating = false;
+	
+	// If no move available at start, do we want to restart instead?
+	if (player_move_available() == 0 && ai_move_available() == 0){
+		can_use_fill = true;
+		// tell player to use the fill pile
+		document.getElementById("fill2").src = "cards/fill_hint.png"; 
+	}
+}
+
+function get_number_from_src(src){
+	var startpoint = src.lastIndexOf("/");
+	var endpoint = src.lastIndexOf("png");
+	var number_on_card = src.substring(startpoint + 2, endpoint-1);
+	return number_on_card;
+}
+
+function validate_move(element, card_location){
+	if (!game_started)
+		return;
+	// extract the number of the card clicked
+	var number_on_card = get_number_from_src(element.src);
+	
+	var stack_number;
+	
+	// Check if card can be placed on either stack
+	if ((stack_number = can_place_card_on_stack(number_on_card)) && !card_animating){
+		clearInterval(ai_move_interval);
+		card_animating = true;
+		var card_element = element; //make a local copy just in case
+		var stack_element = document.getElementById("stack"+stack_number);
+		var original_left = card_element.style.left;
+		var original_top = card_element.style.top;
+		
+
+		$("#"+card_element.id).animate({
+			left:stack_element.style.left,
+			top:"-"+document.getElementById("center_wrapper").style.top
+		},150,function(){player_animate_cb(card_element,stack_element,stack_number,number_on_card,card_location,original_left,original_top)});
+		
+	}
+	else return;
+}
+
+function player_animate_cb(element,stack_element,stack_number,number_on_card,card_location,original_left,original_top){
+	element.style.left = original_left;
+	element.style.top = original_top?original_top:'0px';
+	
+	stack_element.src = element.src;
+	element.src = "";
+	current_stack[stack_number] = number_on_card;
+	
+	// Replace the selected card with a new card from draw pile
+	if (num_cards_in_player_draw == 0){
+		if (num_cards_in_hand == 1) {// this was the only card left in hand
+			//element.src = "cards/blank.png";
+			player_wins();
+			return;
+		}
+		else { // no more cards to draw but still cards in hand
+		
+			num_cards_in_hand = num_cards_in_hand - 1;
+			//element.src = "cards/blank.png";
+			player_cards[card_location] = -1;
+		}
+	}
+	else { 	// More cards to be drawn		
+		var new_index = random_unused_index();
+		element.src = "cards/"+filename_of_index(new_index);
+		player_cards[card_location] = number_of_index(new_index);
+		num_cards_in_player_draw = num_cards_in_player_draw - 1;
+		if (num_cards_in_player_draw == 2){
+			// change the graphics a little
+			document.getElementById("draw").src = "cards/b1fv_two.png";
+		}
+		else if (num_cards_in_player_draw == 1)
+			document.getElementById("draw").src = "cards/b1fv.png";
+		else if (num_cards_in_player_draw == 0)
+			document.getElementById("draw").src = "";
+		document.getElementById("remaining_draw").innerHTML = num_cards_in_player_draw;
+	}
+	
+	if (player_move_available() == 0 && ai_move_available() == 0){
+		can_use_fill = true;
+		document.getElementById("fill2").src = "cards/fill_hint.png";
+	}
+	ai_move_interval = setInterval(function(){ai_move()},(11-dif_level)*300);
+	card_animating = false;
+}
+
+/*
+	Checks if the player can still place a card.
+	Returns the card number if the card can be placed.
+	Returns 0 otherwise.
+*/
+function player_move_available(){
+	
+	for (var icard = 1; icard <= 5; icard++){
+		var stack_number;
+		if (stack_number = can_place_card_on_stack(player_cards[icard]))
+			return icard;
+	}
+	return 0;
+	
+}
+
+/*
+	Checks if AI can still place a card.
+	Returns the card number if the card can be placed.
+	Returns 0 otherwise.
+*/
+function ai_move_available(){
+	
+	for (var icard = 1; icard <= 5; icard++){
+		var stack_number;
+		if (stack_number = can_place_card_on_stack(ai_cards[icard]))
+			return icard;
+	}
+	return 0;
+	
+}
+
+function player_wins(){
+	clearInterval(ai_move_interval);
+	alert("You win!");
+	game_end_choices_popup();
+	// Reset the game
+}
+
+function tie_game(){
+	clearInterval(ai_move_interval);
+	alert("Tie Game!");
+	game_end_choices_popup();
+}
+
+/*
+	AI checks through its 5 cards and see if it can play any of them
+	AI only plays 1 card in this function
+*/
+function ai_move(){
+	if (!game_started)
+		return;
+	
+	// This function will run 2/3 of the time, to make the timing a little more random
+	var random_number = Math.round(Math.random()*10);
+	console.log(random_number);
+	if (random_number%3 == 0)
+		return;
+	
+	var stack_number;
+	for (var icard = 1; icard <= 5; icard++){
+			//alert("icard is: "+icard +"\ncurrent stack:" +current_stack[1]+","+current_stack[2]);
+		if ((stack_number = can_place_card_on_stack(ai_cards[icard])) && !card_animating){
+			card_animating = true;
+			clearInterval(ai_move_interval);
+			//alert("putting "+ai_cards[icard]+" onto stack #"+stack_number+" : "+current_stack[stack_number]);
+			/*
+				- Animate the card to the stack, takes 200ms
+				- Change the card on the stack
+				- Clear the card in hand
+				- Reset the position of the card in hand
+				- Give the position a new card
+			*/
+			var element = document.getElementById("ai"+icard);
+			var stack_element = document.getElementById("stack"+stack_number);
+			var original_left = element.style.left;
+			var original_top = element.style.top;
+			$("#ai"+icard).animate({
+				left:stack_element.style.left,
+				top:document.getElementById("center_wrapper").style.top
+			},150,function(){ai_animate_cb(element,stack_element,stack_number,icard,original_left,original_top)});
+			break;
+		}
+	}
+	// At this point, AI has no moves to make
+	
+	if (!player_move_available() && !ai_move_available()){
+		clearInterval(ai_move_interval);
+		if (fill_remaining >= 1){
+			can_use_fill = true;
+			document.getElementById("fill2").src = "cards/fill_hint.png";
+			return;
+		}
+		// This is a tricky case: when no more cards left in the fill pile
+		// and the game is still going, calculate winner:
+		else if (game_started == true){
+			game_started = false;
+			document.getElementById("fill2").src = "";
+			document.getElementById("fill1").src = "";
+			if ((num_cards_in_ai + num_cards_in_ai_draw)>(num_cards_in_hand+num_cards_in_player_draw)){
+				alert("Out of moves and out of cards");
+				player_wins();
+			}
+			else if ((num_cards_in_ai + num_cards_in_ai_draw)<(num_cards_in_hand+num_cards_in_player_draw)){
+				alert("Out of moves and out of cards");
+				ai_wins();
+			}
+			else {
+				alert("Out of moves and out of cards");
+				tie_game();
+			}
+		}
+	}
+}
+
+function ai_animate_cb(element,stack_element,stack_number,icard,original_left,original_top){
+	element.style.left = original_left;
+	element.style.top = original_top?original_top:'0px';
+	
+	stack_element.src = element.src;
+	element.src = "";
+	current_stack[stack_number] = ai_cards[icard];
+	
+	if (num_cards_in_ai_draw == 0){
+		if (num_cards_in_ai == 1) {// This was the only card left in AI hand
+			//element.src = "cards/blank.png";
+			ai_wins();
+			return;
+		}
+		else { // no more cards to draw but still cards in AI hand
+			num_cards_in_ai = num_cards_in_ai - 1;
+			//element.src = "cards/blank.png";
+			ai_cards[icard] = -1;
+		}
+	}
+	else { // More cards to be drawn
+		var new_index = random_unused_index();
+		element.src = "cards/"+filename_of_index(new_index);
+		ai_cards[icard] = number_of_index(new_index);
+		num_cards_in_ai_draw = num_cards_in_ai_draw - 1;
+		if (num_cards_in_ai_draw == 2){
+			// change the graphics a little
+			document.getElementById("ai_draw").src = "cards/b1fv_two.png";
+		}
+		else if (num_cards_in_ai_draw == 1)
+			document.getElementById("ai_draw").src = "cards/b1fv.png";
+		else if (num_cards_in_ai_draw == 0)
+			document.getElementById("ai_draw").src = "";
+		document.getElementById("remaining_ai_draw").innerHTML = num_cards_in_ai_draw;
+	}
+	ai_move_interval = setInterval(function(){ai_move()},(11-dif_level)*300);
+	card_animating = false;
+}
+
+function ai_wins(){
+	clearInterval(ai_move_interval);
+	alert("You lost! :(");
+	game_end_choices_popup();
+}
+
+/*
+	When there is no move left by either player or AI, use this fill pile
+	to refresh the stack pile
+*/
+function use_fill(){
+	if (!game_started || !can_use_fill)
+		return;
+	if (fill_remaining <= 0){ // No more fill to use!
+		alert("No more fill to use!");
+		return;
+	}
+	clearInterval(ai_move_interval);
+	ai_move_interval = setInterval(function(){ai_move()},(11-dif_level)*300);
+	// give stack1 and stack2 both a new card
+	var new_index = random_unused_index();
+	document.getElementById("stack1").src = "cards/"+filename_of_index(new_index);
+	current_stack[1] = number_of_index(new_index);
+	
+	new_index = random_unused_index();
+	document.getElementById("stack2").src = "cards/"+filename_of_index(new_index);
+	current_stack[2] = number_of_index(new_index);
+	fill_remaining = fill_remaining - 1;
+	can_use_fill = false;
+	if (fill_remaining == 0){
+		document.getElementById("fill1").src = "";
+		document.getElementById("fill2").src = "";
+	}
+	else {
+		document.getElementById("fill1").src = "cards/b1fv.png";
+		document.getElementById("fill2").src = "cards/b1fv.png";
+	}
+	
+}
+
+/*
+	Checks if card can be placed on a stack
+	Returns stack number (1,2) on success, 0 otherwise
+*/
+function can_place_card_on_stack(number_on_card){
+	for (var istack = 1; istack <= 2; istack++){
+		if (number_on_card == parseInt(current_stack[istack],10) + 1 
+		|| number_on_card == parseInt(current_stack[istack],10) - 1
+		|| (number_on_card==13 && current_stack[istack]==1) 
+		|| (number_on_card==1 && current_stack[istack]==13))
+			return istack;
+	}
+	return 0;
+}
+
+function enable_dif_select(){
+	document.getElementById("difficulty").disabled = false;
+	document.getElementById("difficulty").style.visibility = "visible";
+}
+
+function game_end_choices_popup(){
+	var response = confirm("Press OK to play again.\nPress Cancel to select a new difficulty");
+	if (response == true){ // want to use old difficulty
+		restart(true);
+	}
+	else { // want to select new difficulty
+		document.getElementById("difficulty").disabled = false;
+		document.getElementById("difficulty").style.visibility = "visible";
+		document.getElementById("difficulty_level_text").innerHTML = "Select difficulty level:";
+		game_started = false;
+	}
+}
+
+function set_theme(color1,color2){
+	var element = document.getElementById("body");
+	element.style.color = color1;
+	element.style.backgroundColor = color2;
+}
+
+/*
+	Moves a card to the stack(1 or 2)
+	Time: 200ms?
+*/
+function animate_card(element,stack_number){
+	var animation_steps = 10; //5 steps
+	var animation_delay = animation_time/animation_steps;
+	var end_left,end_top,start_left,start_top;
+	
+	end_left = parseInt(document.getElementById("stack"+stack_number).style.left,10);
+	end_top = parseInt(document.getElementById("center_wrapper").style.top);
+	
+	start_left = parseInt(element.style.left,10);
+	start_top = parseInt(element.parentNode.style.top,10);
+	start_top = start_top?start_top:0; // start_top may not be defined
+	
+	var xdistance = end_left - start_left;
+	var ydistance = end_top - start_top;
+	var xstep = xdistance/animation_steps;
+	var ystep = ydistance/animation_steps;
+	// Set the element's z-index to MAX_VALUE so it shows on top of everything else
+	element.style.zIndex = 100;
+	// Remember to set it back to 1 after
+	setTimeout(function(){element.style.zIndex = 1},animation_time*2);
+	animate_element_linear(element,xstep,ystep,animation_steps-1,end_left,end_top,animation_delay);
+	
+}
+
+/*
+	Moves an element RIGHT pixels right, and DOWN pixels down
+	Moves ITERATIONS times, with ANIMATION_DELAY ms between each move
+	Moves the element to the position of (final_left,final_top)
+*/
+function animate_element_linear(element,right,down,iterations,final_left,final_top,animation_delay){
+	if (element.style.left)
+		element.style.left = (parseInt(element.style.left,10) + right) + 'px';
+	else element.style.left = right + 'px';
+	if (element.style.top)
+		element.style.top = (parseInt(element.style.top,10) + down) + 'px';
+	else element.style.top = down + 'px';
+	if (iterations == 0){
+		return;
+	}
+	iterations--;
+	setTimeout(function(){animate_element_linear(element,right,down,iterations,final_left,final_top,animation_delay)},animation_delay);
+}
+
+/*
+	Shows the progress list when hovered over the 'progress' text
+*/
+$(function(){
+	$("#progress_update").hover(function(){
+		$("#progress_content").show(200);
+	},
+	function(){
+		$("#progress_content").hide(200);
+	});
+});
+
+/*
+	Shows the plans list when hovered over the 'plans' text
+*/
+$(function(){
+	$("#plans_update").hover(function(){
+		$("#plans_content").show(200);
+	},
+	function(){
+		$("#plans_content").hide(200);
+	});
+});
+
+</script>
+</head>
+
+<body id="body" style="margin:0px">
+<script>
+
+/* This array of 1-52 cards keeps track of whether a card is 
+used in the current game or not (values of true/false) */
+var cards = new Array();
+/*	1  - 13 CLUBS
+ *	14 - 26 DIAMONDS
+ *  27 - 39 HEARTS
+ *	40 - 52 SPADES */
+
+var game_started = false;
+var fill_remaining = 5;
+var player_needs_fill = false;
+var ai_needs_fill = false;
+var can_use_fill = false;
+var current_stack = new Array(); // stores card numbers currently on the stack
+var dif_level = 5;
+
+var num_cards_in_hand = 0;
+var num_cards_in_ai = 0;
+var num_cards_in_player_draw = 15;
+var num_cards_in_ai_draw = 15;
+var ai_cards = new Array(); // cards 1-5, element in array represents card number
+var player_cards = new Array();
+window.onload = enable_dif_select;
+
+var ai_move_interval;
+var animation_time = 200; //ms
+var card_animating = false;
+
+</script>
+
+<font face = "sans-serif">
+<div id="ai_wrapper" style="position:absolute;left:50%;top:20px;z-index:1">
+	<p id="ai_hand" style="position:absolute;left:-325px;top:20px;width:80px"></p>
+	<img id="ai1" style="position:absolute;left:-240px" onclick="animate_card(this,1)">
+	<img id="ai2" style="position:absolute;left:-160px" >
+	<img id="ai3" style="position:absolute;left:-80px" >
+	<img id="ai4" style="position:absolute;left:0px" >
+	<img id="ai5" style="position:absolute;left:80px" >
+	<img id="ai_draw" style="position:absolute;left:160px" >
+	<div id="remaining_ai_draw" style="position:relative;left:250px;top:34px"></div>
+</div>
+
+<div id="center_wrapper" style="position:absolute;left:50%;top:140px;z-index:-1">
+	<img id="fill1" style="position:absolute;left:-240px" >
+	<img id="stack1" style="position:absolute;left:-80px" >
+	<img id="stack2" style="position:absolute;left:10px" onclick="start()" >
+	<img id="fill2" style="position:absolute;left:160px" onclick="use_fill()" >
+</div>
+
+<div id="hand_wrapper" style="position:absolute;left:50%;top:260px;z-index:1">
+	<p id="player_hand" style="position:absolute;left:-325px;top:20px;width:80px"></p>
+	<img id="hand1" style="position:absolute;left:-240px" onclick="validate_move(this,1)">
+	<img id="hand2" style="position:absolute;left:-160px" onclick="validate_move(this,2)">
+	<img id="hand3" style="position:absolute;left:-80px" onclick="validate_move(this,3)">
+	<img id="hand4" style="position:absolute;left:0px" onclick="validate_move(this,4)">
+	<img id="hand5" style="position:absolute;left:80px" onclick="validate_move(this,5)">
+	<img id="draw" style="position:absolute;left:160px" >
+	<div id="remaining_draw" style="position:relative;left:250px;top:34px"></div>
+</div>
+
+<div id="difficulty_wrapper" style="position:absolute;top:20px;left:20px">
+	<div id="difficulty_level_text" style="position:relative;width:150px">Select difficulty level to start:</div>
+	<form action="" style="position:relative">
+	<select id="difficulty">
+	<option value="1" onclick="restart(false)">1</option>
+	<option value="2" onclick="restart(false)">2</option>
+	<option value="3" onclick="restart(false)">3</option>
+	<option value="4" onclick="restart(false)">4</option>
+	<option value="5" onclick="restart(false)" selected="selected">5</option>
+	<option value="6" onclick="restart(false)">6</option>
+	<option value="7" onclick="restart(false)">7</option>
+	<option value="8" onclick="restart(false)">8</option>
+	<option value="9" onclick="restart(false)">9</option>
+	<option value="10" onclick="restart(false)">10</option>
+	</select>
+	</form>
+	
+</div>
+<div id="theme_wrapper" style="position:absolute;top:100%">
+	<button id="theme1" style="position:relative;top:-40px" onclick="set_theme('#000000','#FFFFFF')">Black/White</button>
+	<button id="theme2" style="position:relative;top:-40px" onclick="set_theme('#3399ff','#282828')">Blue/Grey</button>
+	<!-- <button id="ai_mover" style="position:relative;top:-40px" onclick="ai_move()">MOVE!</button>
+ -->
+ </div>
+
+</font>
+</body>
+
+</html>

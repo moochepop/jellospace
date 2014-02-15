@@ -1,0 +1,60 @@
+<html>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+<head>
+<link rel="stylesheet" type="text/css" href="../main.css">
+<link rel="stylesheet" type="text/css" href="chat.css">
+<title>Scribbles - Chat</title>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+<script type="text/javascript" src="chat.js"></script>
+</head>
+<body onload="page_init()">
+<div id="header" >
+	<div id="header_content"><a href="http://individual.utoronto.ca/jerryshe/">Scribbles</a></div>
+</div>
+<div id="page">
+	<div id="navbar" >
+		<h2>Speed Card Game</h2>
+		<a href="http://individual.utoronto.ca/jerryshe/speed/speed.htm">Play!</a>
+		<a href="http://individual.utoronto.ca/jerryshe/speed/instructions.htm">Instructions</a>
+		<h2>OMG Chat!</h2>
+		<a href="http://jello.webatu.com/chat/chat.htm">Chatroom</a>
+		<h2>Side Dishes</h2>
+		<a href="http://individual.utoronto.ca/jerryshe/sides/snow.htm">Snow</a>
+		<a href="http://individual.utoronto.ca/jerryshe/sides/fireworks.htm">Fireworks</a>
+		<h2>Updates</h2>
+		<a href="http://individual.utoronto.ca/jerryshe/updates/progress.htm">Progress</a>
+		<a href="http://individual.utoronto.ca/jerryshe/updates/nexts.htm">Nexts</a>
+		<h2>Miscellaneous</h2>
+		<a href="http://individual.utoronto.ca/jerryshe/miscellaneous/doodles.htm">Doodles</a>
+	</div>
+	<div id="left_sidebar" style="display:none">
+	
+	</div>
+	<div id="main">
+		<div id="welcome"></div>
+		<div id="display" style="display:inline-block"></div>
+		<div id="online_users_wrapper" style="display:inline-block">
+			<div id="online_users" >
+				<h4 id="online_users_title">Online Users</h4>
+				<div id="online_users_list"></div>
+			</div>
+		</div>
+		<div id="user_input">
+			<div id="sessionname" style="display:inline-block"></div>
+			<!-- <form><input type="text"/></form><br /> -->
+			
+			<input type="messageBox" id="message" style="display:inline-block" maxlength="2000" size="60" placeholder="Enter your message" />
+			<input type="button" value="Send" onClick="process('post_new')"/>
+			<select >
+				<option selected>&lt;scrolling&gt;</option>
+				<option value="auto" onclick="change_scroll_behavior('auto')">On new msg</option>
+				<option value="none" onclick="change_scroll_behavior('none')">No scroll</option>
+			</select>
+			<input type="button" id="switch_layout" value="expand" onClick="switch_layout()"/>
+		</div>
+	</div>
+	<div style="clear:both;width:100%;margin:0px;padding:0px;"></div>
+</div>
+</body>
+</html>

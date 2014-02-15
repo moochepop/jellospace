@@ -1,0 +1,131 @@
+body, p, a{
+	font-family:veranda,helvetica,arial,sans-serif;
+	font-size:15px;
+}
+
+body{
+	margin:0px;
+}
+
+h1{
+	font-size:28px;
+	margin-top:10px;
+	margin-bottom:10px;
+	font-weight:normal;
+}
+
+h2{
+	font-size:22px;
+	margin-top:10px;
+	margin-bottom:10px;
+	font-weight:normal;
+}
+
+h3{
+	font-size:18px;
+	margin-top:10px;
+	margin-bottom:10px;
+	font-weight:normal;
+}
+
+h4{
+	font-size:18px;
+	margin-top:10px;
+	margin-bottom:10px;
+	font-weight:normal;
+}
+
+ul{
+	margin-top:10px;
+	margin-bottom:10px;
+}
+
+li{
+	margin-top:10px;
+	margin-bottom:10px;
+}
+
+#header{
+	
+	min-width:1000px;
+	height:33px;
+	color:rgb(40,40,40);
+	background-color:#9999ff;
+}
+
+#header_content a:link, #header_content a:visited, #header_content a:hover, #header_content a:active{
+	
+	position:fixed;
+	right:20px;
+	font-size:26px;
+	color:rgb(40,40,40);
+	text-decoration:none;
+}
+
+#header_content a:hover, #header_content a:active{
+	color:rgb(0,0,0);
+	text-decoration:underline;
+}
+ 
+#page{
+	/* float:left; */
+	width:920px;
+	margin-left:50px;
+	margin-top:10px;
+	padding-top:10px;
+	padding-left:20px;
+	padding-bottom:20px;
+	box-shadow:0px 0px 20px 3px rgb(211, 211, 211);
+}
+
+#navbar{
+	width:175px;
+	float:left;
+	padding-top:10px;
+	background-color:white;
+	margin-left:10px;
+}
+
+#navbar h2{
+	font-size:18px;
+	font-weight:normal;
+	color:#3333ff ;
+}
+
+#navbar a:link, #navbar a:visited, #navbar a:hover, #navbar a:active{
+	display:block;
+	color:rgb(60,60,60);
+	text-decoration:none;
+	padding-bottom:3px;
+	width:100px;
+}
+
+#navbar a:hover, #navbar a:active{
+	color:rgb(0,0,0);
+	text-decoration:underline;
+}
+
+#navbar a:hover{
+	/*color: #fff;*/
+	background: #9999ff;
+	border-left: 5px solid #3333ff;
+	padding-left:2px;
+	min-width: 160px; /* animated property. Set to desired final length of background */
+	-webkit-transition: all 0.3s ease-out;
+	-moz-transition: all 0.3s ease-out;
+	-o-transition: all 0.3s ease-out;
+	transition: all 0.3s ease-out;
+
+}
+
+#main{
+	width:700px;
+	float:left;
+	padding-left:10px;
+	border-left:1px solid rgb(200,200,200);
+	margin:0px;
+}
+
+#main h3{
+	color:#3333ff;
+}
