@@ -84,6 +84,7 @@ li{
 	padding-top:10px;
 	background-color:white;
 	margin-left:10px;
+	display:none;
 }
 
 #navbar h2{
@@ -97,7 +98,7 @@ li{
 	color:rgb(60,60,60);
 	text-decoration:none;
 	padding-bottom:3px;
-	width:100px;
+	width:110px;
 }
 
 #navbar a:hover, #navbar a:active{

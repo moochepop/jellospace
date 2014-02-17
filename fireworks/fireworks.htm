@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Fireworks</title>
+<link rel="stylesheet" type="text/css" href="fireworks.css">
+<link rel="stylesheet" type="text/css" href="ui.css">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+<script src="fireworks.js"></script>
+<script src="Rocket.js"></script>
+<script src="Explosion.js"></script>
+<script src="Rpanel.js"></script>
+<script src="Slider.js"></script>
+
+</head>
+<body>
+	<div id="rocket_count" 	onclick="saveProgress();" onmouseover="TooltipSaveShow();" onmouseout="TooltipSaveHide();"></div>
+	<div id="tooltip_save">Save</div>
+	<div id="rpanel_toggle" onclick="toggleRpanel(300, 'swing');" >
+		<img src="images/rpanel_show.png"/>
+	</div>
+	<div id="rpanel">
+		<h1>Research Options</h1>
+		<div class="research_option" id="research_elements">Elements</div>
+		<div class="research_option" id="research_noises">Noises</div>
+		<div class="research_option" id="research_effects">Effects</div>
+		<div class="research_option" id="research_pollutions">Pollutions</div>
+		<div class="research_option" id="research_permits">Permits</div>
+		<div class="research_options_separator"></div>
+		
+	</div>
+	<div id="money"></div>
+	<div id="coin" ><img src="images/coin_20.png"/></div>
+	<canvas id="main_canvas" >
+	<div id="test" style="position:absolute;left:100px;top:100px;color:white"></div>
+</body>
+</html>

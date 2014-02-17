@@ -1,0 +1,39 @@
+html, body{
+	width: 100%;
+	height: 100%;
+	margin:0px;
+	padding:0px;
+	font-family:veranda,helvetica,arial,sans-serif;
+}
+
+#rocket_count{
+	position:absolute;
+	display:block;
+	top:2px;
+	left:2px;
+	font-family:veranda,helvetica,arial,sans-serif;
+	font-size:18px;
+	color: white;
+	z-index:100;
+	cursor: pointer;
+}
+
+#tooltip_save{
+	position:absolute;
+	display:none;
+	top:39px;
+	left:2px;
+	font-family:veranda,sans-serif;
+	font-size:14px;
+	color:white;
+	background-color:gray;
+	padding:1px;
+	border:1px solid white;
+	z-index:100;
+}
+
+#main_canvas{
+	position:absolute;
+	display: block;
+	cursor: crosshair;
+}
